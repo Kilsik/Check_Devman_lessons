@@ -3,6 +3,7 @@ import os
 import asyncio
 import requests
 import telegram
+import logging
 
 from dotenv import load_dotenv, find_dotenv
 
@@ -13,6 +14,8 @@ async def main():
     BOT_TOKEN = os.environ['BOT_TOKEN']
     CHAT_ID = os.environ['CHAT_ID']
 
+    logging.basicConfig(level=logging.DEBUG)
+
     url = 'https://dvmn.org/api/long_polling/'
     header = {
         'Authorization': f'Token {TOKEN}'
@@ -20,6 +23,7 @@ async def main():
     timestamp = ''
 
     bot = telegram.Bot(BOT_TOKEN)
+    logging.info('Bot started')
     while True:
         try:
             params = {'timestamp': timestamp}
