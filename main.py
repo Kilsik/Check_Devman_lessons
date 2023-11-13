@@ -1,5 +1,6 @@
+from logging import LogRecord
 import os
-
+import time
 import asyncio
 import requests
 import telegram
@@ -8,13 +9,22 @@ import logging
 from dotenv import load_dotenv, find_dotenv
 
 
-async def main():
+def main():
     load_dotenv(find_dotenv())
     TOKEN = os.environ['TOKEN']
     BOT_TOKEN = os.environ['BOT_TOKEN']
     CHAT_ID = os.environ['CHAT_ID']
+    bot = telegram.Bot(BOT_TOKEN)
 
-    logging.basicConfig(level=logging.DEBUG)
+    class TelegramBotHandler(logging.Handler):
+
+        def emit(self, record):
+            log_entry = self.format(record)
+            bot.send_message(text=log_entry, chat_id=CHAT_ID)
+
+    logger = logging.getLogger('check_lessons')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(TelegramBotHandler())
 
     url = 'https://dvmn.org/api/long_polling/'
     header = {
@@ -22,18 +32,18 @@ async def main():
         }
     timestamp = ''
 
-    bot = telegram.Bot(BOT_TOKEN)
-    logging.info('Bot started')
+    logger.info('Bot started')
     while True:
         try:
             params = {'timestamp': timestamp}
-            response = requests.get(url, headers=header, params=params, timeout=120)
+            response = requests.get(url, headers=header, params=params, timeout=20)
             response.raise_for_status()
         except requests.exceptions.ReadTimeout:
+            logger.info('Надо ж дать')
             continue
         except requests.ConnectionError as err:
-            await asyncio.sleep(180)
-            print(err)
+            time.sleep(180)
+            logger.error(err)
             continue
         response_attempts = response.json()
         if 'timestamp_to_request' in response_attempts:
@@ -48,9 +58,8 @@ async def main():
                 else:
                     add_text = 'Преподавателю все понравилось, можно приступать к следующему уроку!'
                 lesson_url = attempt['lesson_url']
-                async with bot:
-                    await bot.send_message(text=f'У Вас проверили работу «{lesson_title}»\n\n{add_text}\n\n {lesson_url}', chat_id=CHAT_ID)
+                bot.send_message(text=f'У Вас проверили работу «{lesson_title}»\n\n{add_text}\n\n {lesson_url}', chat_id=CHAT_ID)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
