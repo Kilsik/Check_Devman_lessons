@@ -1,7 +1,5 @@
-from logging import LogRecord
 import os
 import time
-import asyncio
 import requests
 import telegram
 import logging
@@ -25,40 +23,42 @@ def main():
     logger = logging.getLogger('check_lessons')
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramBotHandler())
+    try:
+        url = 'https://dvmn.org/api/long_polling/'
+        header = {
+            'Authorization': f'Token {TOKEN}'
+            }
+        timestamp = ''
 
-    url = 'https://dvmn.org/api/long_polling/'
-    header = {
-        'Authorization': f'Token {TOKEN}'
-        }
-    timestamp = ''
-
-    logger.info('Bot started')
-    while True:
-        try:
-            params = {'timestamp': timestamp}
-            response = requests.get(url, headers=header, params=params, timeout=20)
-            response.raise_for_status()
-        except requests.exceptions.ReadTimeout:
-            logger.info('Надо ж дать')
-            continue
-        except requests.ConnectionError as err:
-            time.sleep(180)
-            logger.error(err)
-            continue
-        response_attempts = response.json()
-        if 'timestamp_to_request' in response_attempts:
-            timestamp = response_attempts['timestamp_to_request']
-        else:
-            timestamp = response_attempts['last_attempt_timestamp']
-            new_attempts = response_attempts['new_attempts']
-            for attempt in new_attempts:
-                lesson_title = attempt['lesson_title']
-                if attempt['is_negative']:
-                    add_text = 'К сожалению, в работе нашлись ошибки.'
-                else:
-                    add_text = 'Преподавателю все понравилось, можно приступать к следующему уроку!'
-                lesson_url = attempt['lesson_url']
-                bot.send_message(text=f'У Вас проверили работу «{lesson_title}»\n\n{add_text}\n\n {lesson_url}', chat_id=CHAT_ID)
+        logger.info('Bot started')
+        while True:
+            try:
+                params = {'timestamp': timestamp}
+                response = requests.get(url, headers=header, params=params, timeout=120)
+                response.raise_for_status()
+            except requests.exceptions.ReadTimeout:
+                logger.info('Надо ж дать')
+                continue
+            except requests.ConnectionError as err:
+                time.sleep(180)
+                logger.error(err)
+                continue
+            response_attempts = response.json()
+            if 'timestamp_to_request' in response_attempts:
+                timestamp = response_attempts['timestamp_to_request']
+            else:
+                timestamp = response_attempts['last_attempt_timestamp']
+                new_attempts = response_attempts['new_attempts']
+                for attempt in new_attempts:
+                    lesson_title = attempt['lesson_title']
+                    if attempt['is_negative']:
+                        add_text = 'К сожалению, в работе нашлись ошибки.'
+                    else:
+                        add_text = 'Преподавателю все понравилось, можно приступать к следующему уроку!'
+                    lesson_url = attempt['lesson_url']
+                    bot.send_message(text=f'У Вас проверили работу «{lesson_title}»\n\n{add_text}\n\n {lesson_url}', chat_id=CHAT_ID)
+    except Exception as err:
+        logger.fatal(err)
 
 
 if __name__ == '__main__':
