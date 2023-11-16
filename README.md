@@ -15,6 +15,7 @@ pip install -r requirements.txt
 - `BOT_TOKEN` - токен телеграмм-бота, полученный от [BotFather](https://t.me/BotFather)
 - `TOKEN` - Ваш персональный токен авторизации на [Devman](https://dvmn.org/api/docs/)
 - `CHAT_ID` - Ваш ID Telegram, который Вы можете узнать [здесь](https://t.me/getmyid_bot)
+- `LOG_BOT_TOKEN` - токен телеграмм-бота, куда будут отправляться логи (сообщения о начале работы, ошибках и т.п.)
 
 ## Запуск
 Для запуска бота выполните команду
