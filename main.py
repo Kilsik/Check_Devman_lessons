@@ -11,14 +11,16 @@ def main():
     load_dotenv(find_dotenv())
     TOKEN = os.environ['TOKEN']
     BOT_TOKEN = os.environ['BOT_TOKEN']
+    LOG_BOT_TOKEN = os.environ['LOG_BOT_TOKEN']
     CHAT_ID = os.environ['CHAT_ID']
     bot = telegram.Bot(BOT_TOKEN)
+    log_bot = telegram.Bot(LOG_BOT_TOKEN)
 
     class TelegramBotHandler(logging.Handler):
 
         def emit(self, record):
             log_entry = self.format(record)
-            bot.send_message(text=log_entry, chat_id=CHAT_ID)
+            log_bot.send_message(text=log_entry, chat_id=CHAT_ID)
 
     logger = logging.getLogger('check_lessons')
     logger.setLevel(logging.INFO)
