@@ -7,28 +7,34 @@ import logging
 from dotenv import load_dotenv, find_dotenv
 
 
+class TelegramBotHandler(logging.Handler):
+
+    def __init__(self, log_bot, chat_id):
+        super().__init__()
+        self.chat_id = chat_id
+        self.log_bot = log_bot
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.log_bot.send_message(text=log_entry, chat_id=self.chat_id)
+
+
 def main():
     load_dotenv(find_dotenv())
-    TOKEN = os.environ['TOKEN']
-    BOT_TOKEN = os.environ['BOT_TOKEN']
-    LOG_BOT_TOKEN = os.environ['LOG_BOT_TOKEN']
-    CHAT_ID = os.environ['CHAT_ID']
-    bot = telegram.Bot(BOT_TOKEN)
-    log_bot = telegram.Bot(LOG_BOT_TOKEN)
-
-    class TelegramBotHandler(logging.Handler):
-
-        def emit(self, record):
-            log_entry = self.format(record)
-            log_bot.send_message(text=log_entry, chat_id=CHAT_ID)
+    token = os.environ['TOKEN']
+    bot_token = os.environ['BOT_TOKEN']
+    log_bot_token = os.environ['LOG_BOT_TOKEN']
+    chat_id = os.environ['CHAT_ID']
+    bot = telegram.Bot(bot_token)
+    log_bot = telegram.Bot(log_bot_token)
 
     logger = logging.getLogger('check_lessons')
     logger.setLevel(logging.INFO)
-    logger.addHandler(TelegramBotHandler())
+    logger.addHandler(TelegramBotHandler(log_bot, chat_id))
     try:
         url = 'https://dvmn.org/api/long_polling/'
         header = {
-            'Authorization': f'Token {TOKEN}'
+            'Authorization': f'Token {token}'
             }
         timestamp = ''
 
@@ -58,7 +64,7 @@ def main():
                     else:
                         add_text = 'Преподавателю все понравилось, можно приступать к следующему уроку!'
                     lesson_url = attempt['lesson_url']
-                    bot.send_message(text=f'У Вас проверили работу «{lesson_title}»\n\n{add_text}\n\n {lesson_url}', chat_id=CHAT_ID)
+                    bot.send_message(text=f'У Вас проверили работу «{lesson_title}»\n\n{add_text}\n\n {lesson_url}', chat_id=chat_id)
     except Exception as err:
         logger.fatal(err)
 
