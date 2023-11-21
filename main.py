@@ -28,7 +28,7 @@ def main():
     bot = telegram.Bot(bot_token)
     log_bot = telegram.Bot(log_bot_token)
 
-    logger = logging.getLogger('check_lessons')
+    logger = logging.getLogger('__name__')
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramBotHandler(log_bot, chat_id))
     try:
